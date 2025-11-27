@@ -1,4 +1,4 @@
-package org.example.controller; // <--- AJUSTADO
+package org.example.controller;
 
 import org.example.service.AntService;
 import org.example.service.SriService;
@@ -9,34 +9,33 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*")
+@CrossOrigin("*")
 public class ConsultaController {
 
     @Autowired private SriService sriService;
     @Autowired private AntService antService;
 
     @GetMapping("/validar-ruc/{ruc}")
-    public Map<String, Object> validarRuc(@PathVariable String ruc) {
-        Map<String, Object> response = new HashMap<>();
-        boolean existe = sriService.existeRuc(ruc);
-
-        if (existe) {
-            response.put("valido", true);
-            response.put("datos", sriService.getDatosPersona(ruc));
+    public Map<String, Object> validar(@PathVariable String ruc) {
+        Map<String, Object> resp = new HashMap<>();
+        if (sriService.esContribuyente(ruc)) {
+            resp.put("existe", true);
+            resp.put("datos", sriService.obtenerDatosPersona(ruc));
         } else {
-            response.put("valido", false);
+            resp.put("existe", false);
         }
-        return response;
+        return resp;
     }
 
-    @GetMapping("/info-completa")
-    public Map<String, Object> obtenerInfo(@RequestParam String placa, @RequestParam String ruc) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("vehiculo", sriService.getVehiculo(placa));
+    @GetMapping("/info-vehicular")
+    public Map<String, Object> info(@RequestParam String placa, @RequestParam String ruc) {
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("vehiculo", sriService.obtenerVehiculo(placa));
 
+        // Extraemos la cédula del RUC (primeros 10 dígitos)
         String cedula = ruc.length() >= 10 ? ruc.substring(0, 10) : ruc;
-        response.put("puntos", antService.obtenerPuntos(cedula, placa));
+        resp.put("puntos", antService.consultarPuntos(cedula, placa));
 
-        return response;
+        return resp;
     }
 }
